@@ -190,14 +190,14 @@ sub kf_list {
 
 sub kf_add {
     my ( $user, $keyid, $keymaterial ) = @_;
-    
+
     $user = $user || $gl_user;
 
     cd_temp_clone() or die "Unable to checkout working copy of gitolite-admin.git\n";
     chdir("keydir");
 
     my $key = "$user" . ($keyid ? "\@$keyid" : "");
-    my $filename = "$key.pub"; 
+    my $filename = "$key.pub";
     my $fh;
     # XXX this isn't necessarily the only error! we could be out of space, have a typo in the filename, etc
     # XXX this is vulnerable to path traversal. The only protection is that we sanitize the input at the top of the script.
@@ -232,7 +232,7 @@ sub kf_del {
     chdir("keydir");
 
     my $key = "$user" . ($keyid ? "\@$keyid" : "");
-    my $filename = "$key.pub"; 
+    my $filename = "$key.pub";
     my $fp = fingerprint( $filename );
     hushed_git( "rm", $filename ) or die "git rm failed\n";
     hushed_git( "commit", "-m", "keys: del $key ($fp)" ) or die "git commit failed\n";
