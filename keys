@@ -11,10 +11,51 @@ use Gitolite::Common;
 use Gitolite::Easy;
 
 =for usage
+# command-line key management for gitolite.
+
+It combines and supersedes both [ukm](https://gitolite.com/gitolite/contrib/ukm)
+and [sskm](https://gitolite.com/gitolite/contrib/sskm#public-vs-private-keys),
+because both are overly complicated.
+
+## Usage
+
+ssh gitolite@server.com keys add user          #- add a new key to the given account; only available to admins
+ssh gitolite@server.com keys add @device       #- add a new key *to your account*
+ssh gitolite@server.com keys add user@device   #- add a new key to "user"'s account under name "name"
+
+ssh gitolite@server.com keys del user          #- revokes the key "user.pub"
+ssh gitolite@server.com keys del @device       #- revokes use "name" from your account
+ssh gitolite@server.com keys del user@device   #- revokes this given key
+
+ssh gitolite@server.com keys list              # shows all keys for you; as a special case: for admins, see *every* key.
+ssh gitolite@server.com keys list user         # shows all keys for "user"
+ssh gitolite@server.com keys list user@device  # shows all keys for "user" # ?? unsupporte
+ssh gitolite@server.com keys list @device      # find all keys with key id -- e.g. if you've forgotten what user had it. ((this isn't very useful; maybe it should be banned?))
+
+ssh gitolite@server.com keys                   # -> shorthand for "list"
+
+ssh gitolite@server.com keys {-h,--help,help}  #- documentation
+
+## Admins
+
+An admin is defined as a user with write access to the gitolite-admin repo.
+Admins can add and remove keys for other users. Regular users can only add, list, and del their own keys.
+
+So, in order to bootstrap a new user, an admin should run
+
+cat user.pub | ssh gitolite@server.com keys add user
+
+In combination with [wildrepos](https://gitolite.com/gitolite/wild) this will make a fully-functioning system.
+If your site has shared repos, use the "perms" command, or edit the gitolite-admin repo directly,
+to grant the new user access to your pre-existing repos.
+
+# Caveats
+
+This edits `gitolite-admin.git` directly, so remember to `git pull` if you need to edit it manually.
 
 =cut
 
-usage() if @ARGV and $ARGV[0] eq '-h';
+usage() if @ARGV and $ARGV[0] eq '-h' or $ARGV[0] eq 'help' or $ARGV[0] eq '--help';
 
 # make a temp clone and switch to it
 our $TEMPDIR;
@@ -201,7 +242,7 @@ sub kf_add {
     my $key = "$user" . ($keyid ? "\@$keyid" : "");
     my $filename = "$key.pub";
     my $fh;
-    # XXX this isn't necessarily the only error! we could be out of space, have a typo in the filename, etc
+    # XXX this isn't necessarily the only error case! we could be out of space, have a typo in the filename, etc
     # XXX this is vulnerable to path traversal. The only protection is that we sanitize the input at the top of the script.
     die "$key already exists.\n" unless sysopen($fh, $filename, O_CREAT | O_EXCL | O_WRONLY);
     print $fh $keymaterial;
