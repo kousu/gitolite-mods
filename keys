@@ -19,7 +19,7 @@ because both are overly complicated.
 
 ## Usage
 
-ssh gitolite@server.com keys add user          #- add a new key to the given account; only available to admins
+ssh gitolite@server.com keys add user          #- add a new key to the given account as "user.pub"; only available to admins
 ssh gitolite@server.com keys add @device       #- add a new key *to your account*
 ssh gitolite@server.com keys add user@device   #- add a new key to "user"'s account under name "name"
 
@@ -27,12 +27,12 @@ ssh gitolite@server.com keys del user          #- revokes the key "user.pub"
 ssh gitolite@server.com keys del @device       #- revokes use "name" from your account
 ssh gitolite@server.com keys del user@device   #- revokes this given key
 
-ssh gitolite@server.com keys list              # shows all keys for you; as a special case: for admins, see *every* key.
-ssh gitolite@server.com keys list user         # shows all keys for "user"
-ssh gitolite@server.com keys list user@device  # shows all keys for "user" # ?? unsupporte
-ssh gitolite@server.com keys list @device      # find all keys with key id -- e.g. if you've forgotten what user had it. ((this isn't very useful; maybe it should be banned?))
+ssh gitolite@server.com keys list              #- shows all keys for you; as a special case: for admins, see *every* key.
+ssh gitolite@server.com keys list user         #- shows all keys for "user"
+ssh gitolite@server.com keys list user@device  #- shows all keys for "user" # ?? unsupporte
+ssh gitolite@server.com keys list @device      #- find all keys with key id -- e.g. if you've forgotten what user had it. ((this isn't very useful; maybe it should be banned?))
 
-ssh gitolite@server.com keys                   # -> shorthand for "list"
+ssh gitolite@server.com keys                   #- shorthand for "list"
 
 ssh gitolite@server.com keys {-h,--help,help}  #- documentation
 
@@ -52,6 +52,10 @@ to grant the new user access to your pre-existing repos.
 # Caveats
 
 This edits `gitolite-admin.git` directly, so remember to `git pull` if you need to edit it manually.
+
+This *only supports* the [old style](https://gitolite.com/gitolite/basic-admin#appendix-2-old-style-multi-keys)
+of keys. This shouldn't be an issue if you only manage keys with 'keys', but if you have a repo
+with hand-curated keys in the new style this might be a problem.
 
 =cut
 
