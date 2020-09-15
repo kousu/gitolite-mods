@@ -46,7 +46,6 @@ $user and $gl_user ne $user and die "You must be admin to manage other users' ke
 
 die "valid operations: list, add, del\n" unless $operation =~ /^(list|add|del)$/;
 if ( $operation eq 'list' ) {
-    #die "list does not take a keyid. Use \"keys list".($user ? " $user" : "")."\" instead.\n" if $keyid;
     kf_list ( $user, $keyid );
 } elsif ( $operation eq 'add' ) {
     if ( $is_admin ) {
@@ -54,6 +53,9 @@ if ( $operation eq 'list' ) {
     } else {
         die "add requires a key name (\"$gl_user\" or \"$gl_user\@device\" or \"\@device\").\n" unless ($user or $keyid); #XXX sketchy
     }
+
+    # TODO: only print this when in interactive mode.
+    # this seems to be unavoidable though; gitolite doesn't seem to be calling us in a way that passes down the isatty() flag.
     print STDERR "please supply the new key on STDIN (e.g. cat you.pub | ssh gitolite\@git.example.com keys add \@laptop).\n";
     kf_add( $user, $keyid, safe_stdin() );
 } elsif ( $operation eq 'del' ) {
@@ -166,6 +168,9 @@ sub print_keylist {
 
 sub kf_list {
     my ( $user, $keyid ) = @_;
+
+    print "Hello $gl_user, you are " . ($is_admin ? "" : "not ") . "an admin.\n\n";
+
     if ( !$user and $is_admin ) {
         print "These are all registered keys:\n";
         # ASSUMPTION: there is always at least one key -- or else you wouldn't be able to run this.
@@ -206,12 +211,22 @@ sub kf_add {
     hushed_git( "add", $filename ) or die "git add failed\n";
     hushed_git( "commit", "-m", "keys: add $key ($fp)" ) or die "git commit failed\n";
     system("gitolite push >/dev/null 2>/dev/null") and die "git push failed\n";
+
+    print "Added $fp : $filename\n";
 }
 
 sub kf_del {
     my ( $user, $keyid ) = @_;
 
     $user = $user || $gl_user;
+
+    # prevent locking out the system
+    # *admins* are allowed to delete a user's last key -- admins are the only users allowed to manage other peoples' keys
+    if ( $user eq $gl_user and scalar(get_pubkeys($user, ""))<=1 ) {
+        die ("You cannot delete your last key. " . ($is_admin ?
+                 "If you really intend to revoke your access, edit gitolite-admin.git manually, or ask a different admin to remove you." :
+                 "Contact your admin to have your account removed.") . "\n" );
+    }
 
     cd_temp_clone() or die "Unable to checkout working copy of gitolite-admin.git\n";
     chdir("keydir");
@@ -222,4 +237,6 @@ sub kf_del {
     hushed_git( "rm", $filename ) or die "git rm failed\n";
     hushed_git( "commit", "-m", "keys: del $key ($fp)" ) or die "git commit failed\n";
     system("gitolite push >/dev/null 2>/dev/null") and die "git push failed\n";
+
+    print "Removed $fp : $filename\n";
 }
