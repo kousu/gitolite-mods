@@ -35,11 +35,12 @@ my $operation = shift || 'list';
 my $keyid     = shift || '';
 # split keyid up into user and user-specific keyid (both are optional)
 # and sanitize the input at the same time.
-$keyid and $keyid !~ /^([-0-9a-z_]+)?(@([-0-9a-z_]+))?$/i and die "invalid keyid $keyid\n";
+# TODO: perhaps move the "@" out of the group, to allow "@" as a legal key name, meaning "$gl_user"
+$keyid and $keyid !~ /^([-0-9a-z_]+)?(@([-0-9a-z_]+))?$/i and die "invalid key $keyid\n";
 my $user;
 ( $user, $keyid ) = ( $1 || '', $3 || '' );
 
-# ----
+
 # ----
 
 $user and $gl_user ne $user and die "You must be admin to manage other users' keys.\n" unless $is_admin;
@@ -48,6 +49,7 @@ die "valid operations: list, add, del\n" unless $operation =~ /^(list|add|del)$/
 if ( $operation eq 'list' ) {
     kf_list ( $user, $keyid );
 } elsif ( $operation eq 'add' ) {
+    # TODO: merge this 'if' into kf_add
     if ( $is_admin ) {
         die "add requires a key name (\"user\" or \"user\@device\" or \"\@device\").\n" unless ($user or $keyid); #XXX sketchy
     } else {
@@ -57,6 +59,7 @@ if ( $operation eq 'list' ) {
     # TODO: only print this when in interactive mode.
     # this seems to be unavoidable though; gitolite doesn't seem to be calling us in a way that passes down the isatty() flag.
     print STDERR "please supply the new key on STDIN (e.g. cat you.pub | ssh gitolite\@git.example.com keys add \@laptop).\n";
+
     kf_add( $user, $keyid, safe_stdin() );
 } elsif ( $operation eq 'del' ) {
     if ( $is_admin ) {
@@ -69,7 +72,6 @@ if ( $operation eq 'list' ) {
 }
 exit;
 
-# ----
 
 # ----
 
