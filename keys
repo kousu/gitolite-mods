@@ -59,7 +59,7 @@ with hand-curated keys in the new style this might be a problem.
 
 =cut
 
-usage() if @ARGV and $ARGV[0] eq '-h' or $ARGV[0] eq 'help' or $ARGV[0] eq '--help';
+usage() if @ARGV and ($ARGV[0] eq '-h' or $ARGV[0] eq 'help' or $ARGV[0] eq '--help');
 
 # make a temp clone and switch to it
 our $TEMPDIR;
