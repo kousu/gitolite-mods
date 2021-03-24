@@ -206,7 +206,7 @@ sub print_keylist {
     my $count = 1;
     for (@list) {
         my $fp = fingerprint($_);
-        print $count++ . ": $fp : $_\n";
+        printf "% 5d : $fp : $_\n", $count++;
     }
 }
 
