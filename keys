@@ -105,7 +105,8 @@ if ( $operation eq 'list' ) {
     # this seems to be unavoidable though; gitolite doesn't seem to be calling us in a way that passes down the isatty() flag.
     print STDERR "please supply the new key on STDIN (e.g. cat you.pub | ssh gitolite\@git.example.com keys add \@laptop).\n";
 
-    kf_add( $user, $keyid, safe_stdin() );
+    my $keymaterial = <STDIN>;
+    kf_add( $user, $keyid, $keymaterial );
 } elsif ( $operation eq 'del' ) {
     if ( $is_admin ) {
         die "del requires a key name (\"user\" or \"user\@device\" or \"\@device\").\n" unless ($user or $keyid); #XXX sketchy
@@ -138,16 +139,6 @@ sub fingerprint {
     # Do not print the output of $output to an untrusted destination.
     die "does not seem to be a valid pubkey\n" unless $fp;
     return $fp;
-}
-
-sub safe_stdin {
-    # read one line from STDIN
-    my $data;
-    my $ret = read STDIN, $data, 4096;
-    # current pubkeys are approx 400 bytes so we go a little overboard
-    die "could not read pubkey data" . ( defined($ret) ? "" : ": $!" ) . "\n" unless $ret;
-    die "pubkey data seems to have more than one line\n" if $data =~ /\n./;
-    return $data;
 }
 
 sub hushed_git {
